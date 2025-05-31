@@ -1,22 +1,24 @@
-## Algorithmic Trading Fund Prototype
+# Algorithmic Trading Fund Prototype
+
 This repository contains a simple end-to-end algorithmic trading fund prototype. It consists of four main components:
-- DataPipeline: Ingests historical market data from Yahoo Finance and stores it in a local SQLite database.
-- Backtester: Runs a backtest on the stored data using a mean-reversion strategy and outputs daily P&L as JSON.
-- API: Serves the backtest results via a FastAPI web service.
-- Dashboard: A React/TypeScript frontend that fetches the P&L JSON and displays a performance chart.
+
+1. **DataPipeline**: Ingests historical market data from Yahoo Finance and stores it in a local SQLite database.
+2. **Backtester**: Runs a backtest on the stored data using a mean-reversion strategy and outputs daily P\&L as JSON.
+3. **API**: Serves the backtest results via a FastAPI web service.
+4. **Dashboard**: A React/TypeScript frontend that fetches the P\&L JSON and displays a performance chart.
+
+---
 
 ## Prerequisites
 
-- Operating System: macOS (instructions assume macOS, but Linux should work similarly).
-
-- Python: 3.10 or higher
-
-- Node.js & Yarn: For the React dashboard
-
-- SQLite3: (optional) to inspect the database
+* **Operating System**: macOS (instructions assume macOS, but Linux should work similarly).
+* **Python**: 3.10 or higher
+* **Node.js & Yarn**: For the React dashboard
+* **SQLite3**: (optional) to inspect the database
 
 ## Repository Structure
 
+```
 TradingFund/
 ├── Backtester/             # Python backtesting logic
 │   ├── strategies/
@@ -51,212 +53,220 @@ TradingFund/
 .venv/                      # Python virtual environment (ignored by Git)
 .gitignore                  # Git ignore rules
 README.md                   # This file
+```
+
+---
 
 ## Setup
 
-- Clone the repository
+1. **Clone the repository**
 
-- git clone <YOUR_REPO_URL>
-  - cd TradingFund
+   ```bash
+   git clone <YOUR_REPO_URL>
+   cd TradingFund
+   ```
 
-- Create a Python virtual environment
+2. **Create a Python virtual environment**
 
- - python3 -m venv .venv
- - source .venv/bin/activate
- - pip install --upgrade pip
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   pip install --upgrade pip
+   ```
 
- # Install shared Python dependencies
+3. **Install shared Python dependencies**
 
-  - pip install pandas numpy sqlalchemy backtrader fastapi uvicorn python-dotenv ib_insync openai yfinance
+   ```bash
+   pip install pandas numpy sqlalchemy backtrader fastapi uvicorn python-dotenv ib_insync openai yfinance
+   ```
 
-  - All other subfolders (DataPipeline, Backtester, API) have their own requirements.txt if you want to keep them isolated.
+   All other subfolders (`DataPipeline`, `Backtester`, `API`) have their own `requirements.txt` if you want to keep them isolated.
 
- # Install Node.js dependencies
+4. **Install Node.js dependencies**
 
-  - cd Dashboard
-  - yarn install
-  - cd ..
+   ```bash
+   cd Dashboard
+   yarn install
+   cd ..
+   ```
 
-1. DataPipeline: Ingest Historical Data
+---
 
-Location: DataPipeline/pipeline.py
+## 1. DataPipeline: Ingest Historical Data
 
-Purpose
+**Location:** `DataPipeline/pipeline.py`
 
-Downloads OHLCV data for specified symbols via the yfinance library.
+### Purpose
 
-Filters by a date range (e.g., 2022-01-01 through today).
+* Downloads OHLCV data for specified symbols via the `yfinance` library.
+* Filters by a date range (e.g., `2022-01-01` through today).
+* Strips timezone info and writes the filtered DataFrame to SQLite tables in `market_data.db`.
 
-Strips timezone info and writes the filtered DataFrame to SQLite tables in market_data.db.
+### How to Run
 
-How to Run
+1. Ensure the `.venv` is active:
 
-Ensure the .venv is active:
+   ```bash
+   source .venv/bin/activate
+   ```
+2. (Optional) Inspect or edit `DataPipeline/.env` to set `DB_PATH` (default: `market_data.db`).
+3. Run the pipeline script:
 
-source .venv/bin/activate
+   ```bash
+   cd DataPipeline
+   python pipeline.py
+   ```
+4. Confirm the database:
 
-(Optional) Inspect or edit DataPipeline/.env to set DB_PATH (default: market_data.db).
+   ```bash
+   sqlite3 market_data.db
+   sqlite> .tables
+   AAPL  GOOGL  MSFT  # etc.
+   sqlite> SELECT COUNT(*) FROM AAPL;
+   ```
 
-Run the pipeline script:
+> **Note:** If you encounter rate-limit or network errors, the script will wait 10 seconds and retry once per symbol.
 
-cd DataPipeline
-python pipeline.py
+---
 
-Confirm the database:
+## 2. Backtester: Run a Mean-Reversion Backtest
 
-sqlite3 market_data.db
-sqlite> .tables
-AAPL  GOOGL  MSFT  # etc.
-sqlite> SELECT COUNT(*) FROM AAPL;
+**Location:** `Backtester/backtest.py`
 
-Note: If you encounter rate-limit or network errors, the script will wait 10 seconds and retry once per symbol.
+### Purpose
 
-2. Backtester: Run a Mean-Reversion Backtest
+* Reads price data from the shared SQLite database (`market_data.db`).
+* Filters to a specified date range (e.g., `2022-01-01` to `2023-12-31`).
+* Runs the `MeanReversionStrategy` on a single symbol (default: AAPL).
+* Records daily portfolio value (`self.value_history`) in the strategy.
+* Outputs a JSON array of `{ "date": "YYYY-MM-DD", "value": float }` to a file (e.g., `API/pnl.json`).
 
-Location: Backtester/backtest.py
+### Strategy Details
 
-Purpose
+* **20-day lookback** for SMA and standard deviation.
+* **Z-score threshold**: 2.0 (go long if price < SMA – 2σ; go short if price > SMA + 2σ).
+* **Exit** when z-score crosses 0.
+* **Stake**: 100 shares per trade (default).
 
-Reads price data from the shared SQLite database (market_data.db).
+### How to Run
 
-Filters to a specified date range (e.g., 2022-01-01 to 2023-12-31).
+1. Activate the virtual environment:
 
-Runs the MeanReversionStrategy on a single symbol (default: AAPL).
+   ```bash
+   source .venv/bin/activate
+   ```
+2. Ensure your data is up to date (DataPipeline step). Then run:
 
-Records daily portfolio value (self.value_history) in the strategy.
+   ```bash
+   cd Backtester
+   python backtest.py \
+     --symbol AAPL \
+     --start 2022-01-01 \
+     --end   2023-12-31 \
+     --cash  100000 \
+     --output ../API/pnl.json
+   ```
+3. You should see:
 
-Outputs a JSON array of { "date": "YYYY-MM-DD", "value": float } to a file (e.g., API/pnl.json).
+   * Starting Portfolio Value (e.g., 100,000.00)
+   * Final Portfolio Value (e.g., 99,452.00)
+   * `P&L series written to ../API/pnl.json`
 
-Strategy Details
+### Customization
 
-20-day lookback for SMA and standard deviation.
+* **Different symbol**: change `--symbol MSFT` (make sure you ingested MSFT).
+* **Other strategy**: create a new file in `strategies/` and modify `backtest.py` to use it.
+* **Parameter tuning**: add new `--period`, `--devfactor`, `--stake` arguments and pass into `cerebro.addstrategy(...)`.
+* **Multiple symbols**: modify `run_backtest()` to loop through a list of symbols and add multiple data feeds.
 
-Z-score threshold: 2.0 (go long if price < SMA – 2σ; go short if price > SMA + 2σ).
+---
 
-Exit when z-score crosses 0.
+## 3. API: Serve P\&L via FastAPI
 
-Stake: 100 shares per trade (default).
+**Location:** `API/main.py`
 
-How to Run
+### Purpose
 
-Activate the virtual environment:
+* A minimal web service that reads the JSON output from the backtester (`pnl.json`) and returns it via HTTP.
+* Enables Cross-Origin Resource Sharing (CORS) for the React Dashboard on port 3000.
 
-source .venv/bin/activate
+### Endpoints
 
-Ensure your data is up to date (DataPipeline step). Then run:
+* **GET /pnl**: Returns the array of `{ date, value }` from `pnl.json`.
+* **GET /health**: Returns `{ "status": "ok" }` for a quick health check.
 
-cd Backtester
-python backtest.py \
-  --symbol AAPL \
-  --start 2022-01-01 \
-  --end   2023-12-31 \
-  --cash  100000 \
-  --output ../API/pnl.json
+### How to Run
 
-You should see:
+1. Activate your virtual environment:
 
-Starting Portfolio Value (e.g., 100,000.00)
+   ```bash
+   source .venv/bin/activate
+   ```
+2. (Optional) Inspect `API/.env` to set `DB_PATH` (not used directly here) or IB credentials if you add live trading.
+3. Start the service:
 
-Final Portfolio Value (e.g., 99,452.00)
+   ```bash
+   cd API
+   uvicorn main:app --reload --host 0.0.0.0 --port 8000
+   ```
+4. Verify:
 
-P&L series written to ../API/pnl.json
+   ```bash
+   curl http://localhost:8000/health
+   # { "status": "ok" }
 
-Customization
+   curl http://localhost:8000/pnl
+   # [ { "date":"2022-01-03", "value":100250.00 }, ... ]
+   ```
 
-Different symbol: change --symbol MSFT (make sure you ingested MSFT).
+---
 
-Other strategy: create a new file in strategies/ and modify backtest.py to use it.
+## 4. Dashboard: React Frontend
 
-Parameter tuning: add new --period, --devfactor, --stake arguments and pass into cerebro.addstrategy(...).
+**Location:** `Dashboard/`
 
-Multiple symbols: modify run_backtest() to loop through a list of symbols and add multiple data feeds.
+### Purpose
 
-3. API: Serve P&L via FastAPI
+* A single-page React/TypeScript app that displays a line chart of daily portfolio value.
+* On mount, it calls `GET http://localhost:8000/pnl` to fetch the JSON data and passes it to a Recharts component.
 
-Location: API/main.py
+### Components
 
-Purpose
+* **`src/api/client.ts`**: Axios instance with `baseURL` set to `http://localhost:8000`.
+* **`src/components/PnlChart.tsx`**: Renders a Recharts `LineChart` for the P\&L array.
+* **`src/App.tsx`**: Main component that:
 
-A minimal web service that reads the JSON output from the backtester (pnl.json) and returns it via HTTP.
+  1. Uses `useEffect` to fetch `/pnl` on page load.
+  2. Manages `loading`, `error`, and `pnlData` state.
+  3. Renders `<PnlChart data={pnlData} />` if data is present.
 
-Enables Cross-Origin Resource Sharing (CORS) for the React Dashboard on port 3000.
+### How to Run
 
-Endpoints
+1. Install dependencies (once only):
 
-GET /pnl: Returns the array of { date, value } from pnl.json.
+   ```bash
+   cd Dashboard
+   yarn install
+   cd ..
+   ```
+2. Start the frontend server:
 
-GET /health: Returns { "status": "ok" } for a quick health check.
+   ```bash
+   cd Dashboard
+   yarn start
+   ```
+3. A browser window should open at `http://localhost:3000`. If not, manually navigate there.
+4. The app will show:
 
-How to Run
+   * A loading message while fetching.
+   * The performance chart once `/pnl` returns data.
+   * An error message if the API is unavailable or returns an error.
 
-Activate your virtual environment:
-
-source .venv/bin/activate
-
-(Optional) Inspect API/.env to set DB_PATH (not used directly here) or IB credentials if you add live trading.
-
-Start the service:
-
-cd API
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-
-Verify:
-
-curl http://localhost:8000/health
-# { "status": "ok" }
-
-curl http://localhost:8000/pnl
-# [ { "date":"2022-01-03", "value":100250.00 }, ... ]
-
-4. Dashboard: React Frontend
-
-Location: Dashboard/
-
-Purpose
-
-A single-page React/TypeScript app that displays a line chart of daily portfolio value.
-
-On mount, it calls GET http://localhost:8000/pnl to fetch the JSON data and passes it to a Recharts component.
-
-Components
-
-src/api/client.ts: Axios instance with baseURL set to http://localhost:8000.
-
-src/components/PnlChart.tsx: Renders a Recharts LineChart for the P&L array.
-
-src/App.tsx: Main component that:
-
-Uses useEffect to fetch /pnl on page load.
-
-Manages loading, error, and pnlData state.
-
-Renders <PnlChart data={pnlData} /> if data is present.
-
-## How to Run
-
-Install dependencies (once only):
-
-cd Dashboard
-yarn install
-cd ..
-
-Start the frontend server:
-
-cd Dashboard
-yarn start
-
-A browser window should open at http://localhost:3000. If not, manually navigate there.
-
-The app will show:
-
-A loading message while fetching.
-
-The performance chart once /pnl returns data.
-
-An error message if the API is unavailable or returns an error.
+---
 
 ## Summary of the Data Flow
 
+```text
 DataPipeline: pipeline.py
   ↓ (writes)        
 Backtester: backtest.py ↓ (writes)
@@ -265,28 +275,27 @@ Backtester: backtest.py ↓ (writes)
                        Dashboard: App.tsx (fetch /pnl)
                              ↓ (displays)
                        PnlChart.tsx (line chart)
+```
 
-DataPipeline downloads and stores historical data in market_data.db.
+1. **DataPipeline** downloads and stores historical data in `market_data.db`.
+2. **Backtester** reads `market_data.db`, runs a mean-reversion strategy on one symbol (e.g., AAPL), and writes daily portfolio values to `API/pnl.json`.
+3. **API** serves that JSON array at `/pnl`.
+4. **Dashboard** fetches `/pnl` and renders a performance chart in the browser.
 
-Backtester reads market_data.db, runs a mean-reversion strategy on one symbol (e.g., AAPL), and writes daily portfolio values to API/pnl.json.
-
-API serves that JSON array at /pnl.
-
-Dashboard fetches /pnl and renders a performance chart in the browser.
+---
 
 ## Next Steps / Customization Ideas
 
-1. Add more tickers: Update DataPipeline/pipeline.py to include additional symbols, rerun, then backtest them one by one or as a portfolio.
+* **Add more tickers**: Update `DataPipeline/pipeline.py` to include additional symbols, rerun, then backtest them one by one or as a portfolio.
+* **Try different strategies**: Create new strategy files (e.g., momentum, breakout) and call them from `backtest.py`.
+* **Multi-asset backtest**: Modify `backtest.py` to loop through multiple `symbol`s, add multiple data feeds to `cerebro`, and update the strategy to handle multiple data streams.
+* **Metrics & Reporting**: Instead of just P\&L, compute Sharpe ratio, max drawdown, CAGR. Add new API endpoints like `/metrics` and frontend components to display them.
+* **Live trading integration**: Use `ib_insync` (Interactive Brokers) to place real or paper orders based on your strategy signals.
+* **Containerize**: Write `Dockerfile`s for each component and orchestrate with `docker-compose` to simplify deployment.
+* **User authentication**: Protect the API endpoints with JWT and build a multi-page React dashboard with login, user roles, and audit logs.
 
-2. Try different strategies: Create new strategy files (e.g., momentum, breakout) and call them from backtest.py.
+---
 
-3. Multi-asset backtest: Modify backtest.py to loop through multiple symbols, add multiple data feeds to cerebro, and update the strategy to handle multiple data streams.
+### Congratulations!
 
-4. Metrics & Reporting: Instead of just P&L, compute Sharpe ratio, max drawdown, CAGR. Add new API endpoints like /metrics and frontend components to display them.
-
-5. Live trading integration: Use ib_insync (Interactive Brokers) to place real or paper orders based on your strategy signals.
-
-6. Containerize: Write Dockerfiles for each component and orchestrate with docker-compose to simplify deployment.
-
-7. User authentication: Protect the API endpoints with JWT and build a multi-page React dashboard with login, user roles, and audit logs.
-
+You now have a working prototype of an algorithmic trading fund: automated data ingestion, backtesting, a simple REST API, and an interactive web dashboard. Feel free to explore, iterate, and extend each piece to fit your needs.
