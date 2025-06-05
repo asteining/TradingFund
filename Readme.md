@@ -261,6 +261,27 @@ README.md                   # This file
    * A loading message while fetching.
    * The performance chart once `/pnl` returns data.
    * An error message if the API is unavailable or returns an error.
+## 5. Live Trading: Interactive Brokers
+
+**Location:** `LiveTrader/trader.py`
+
+This optional component connects to the IB Gateway or Trader Workstation using `ib_insync`.
+It streams live prices and places market orders whenever the mean
+reversion logic triggers. Start in a paper account to understand the behaviour.
+
+### How to Run
+
+1. Ensure TWS or the IB Gateway is running with API access enabled.
+2. Edit `LiveTrader/.env` to specify `IB_HOST`, `IB_PORT` and (optionally) `IB_CLIENT_ID`.
+3. Activate your Python environment with `ib_insync` installed.
+4. Execute:
+
+```bash
+cd LiveTrader
+python trader.py AAPL
+```
+
+The script prints trade actions to the console as it reacts to live prices.
 
 ---
 
