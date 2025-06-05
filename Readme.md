@@ -164,7 +164,8 @@ README.md                   # This file
      --start 2022-01-01 \
      --end   2023-12-31 \
      --cash  100000 \
-     --output ../API/pnl.json
+     --output ../API/pnl.json \
+     --strategy enhanced
    ```
 3. You should see:
 
@@ -175,7 +176,7 @@ README.md                   # This file
 ### Customization
 
 * **Different symbol**: change `--symbol MSFT` (make sure you ingested MSFT).
-* **Other strategy**: create a new file in `strategies/` and modify `backtest.py` to use it.
+* **Other strategy**: pass `--strategy enhanced` to try the RSI-based version or add your own file under `strategies/`.
 * **Parameter tuning**: add new `--period`, `--devfactor`, `--stake` arguments and pass into `cerebro.addstrategy(...)`.
 * **Multiple symbols**: modify `run_backtest()` to loop through a list of symbols and add multiple data feeds.
 

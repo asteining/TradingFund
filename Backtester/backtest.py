@@ -10,6 +10,7 @@ import backtrader as bt
 from sqlalchemy import MetaData, Table, select
 from db import engine
 from strategies.mean_reversion import MeanReversionStrategy
+from strategies.mean_reversion_rsi import EnhancedMeanReversionStrategy
 
 
 def fetch_data_from_db(symbol: str) -> pd.DataFrame:
@@ -32,11 +33,12 @@ def fetch_data_from_db(symbol: str) -> pd.DataFrame:
     return df
 
 
-def run_backtest(symbol: str, start: str, end: str, initial_cash: float, output_json: str):
+def run_backtest(symbol: str, start: str, end: str, initial_cash: float, output_json: str, strategy: str):
     """
     1) Pull price data from SQLite via fetch_data_from_db()
-    2) Run Backtrader simulation with MeanReversionStrategy
+    2) Run Backtrader simulation using the requested strategy
     3) Write out a daily P&L series to a JSON file (output_json)
+    4) Print simple performance metrics
     """
     cerebro = bt.Cerebro()
     cerebro.broker.setcash(initial_cash)
@@ -50,7 +52,14 @@ def run_backtest(symbol: str, start: str, end: str, initial_cash: float, output_
     # Convert the Pandas DataFrame into a Backtrader data feed
     data_feed = bt.feeds.PandasData(dataname=df)
     cerebro.adddata(data_feed)
-    cerebro.addstrategy(MeanReversionStrategy)
+    # Map command-line strategy name to class
+    strategy_map = {
+        "mean_reversion": MeanReversionStrategy,
+        "enhanced": EnhancedMeanReversionStrategy,
+    }
+
+    strat_cls = strategy_map.get(strategy, MeanReversionStrategy)
+    cerebro.addstrategy(strat_cls)
 
     print(f"Starting Portfolio Value: {cerebro.broker.getvalue():,.2f}")
     results = cerebro.run()
@@ -74,6 +83,17 @@ def run_backtest(symbol: str, start: str, end: str, initial_cash: float, output_
         json.dump(pnl_data, f, indent=2)
 
     print(f"P&L series written to {output_json}")
+
+    # ---- Performance metrics ----
+    returns = pd.Series(value_history).pct_change().dropna()
+    if not returns.empty:
+        sharpe = (returns.mean() / returns.std()) * (252 ** 0.5)
+        running_max = pd.Series(value_history).cummax()
+        drawdown = (pd.Series(value_history) - running_max) / running_max
+        max_drawdown = drawdown.min()
+        print(f"Sharpe Ratio: {sharpe:.2f}")
+        print(f"Max Drawdown: {max_drawdown:.2%}")
+
     # ### END OF UPDATED SECTION ###
     # ---------------------------------------------------------------
 
@@ -95,6 +115,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--output", type=str, default="pnl.json", help="Path to write P&L JSON."
     )
+    parser.add_argument(
+        "--strategy",
+        type=str,
+        default="mean_reversion",
+        choices=["mean_reversion", "enhanced"],
+        help="Which strategy to run",
+    )
     args = parser.parse_args()
 
     run_backtest(
@@ -103,4 +130,5 @@ if __name__ == "__main__":
         end=args.end,
         initial_cash=args.cash,
         output_json=args.output,
+        strategy=args.strategy,
     )
