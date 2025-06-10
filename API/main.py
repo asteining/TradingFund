@@ -10,9 +10,10 @@ from dotenv import load_dotenv
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
 
-DB_PATH = os.getenv("DB_PATH")
-if not DB_PATH:
+db_path_env = os.getenv("DB_PATH")
+if not db_path_env:
     raise RuntimeError("DB_PATH must be set in API/.env")
+DB_PATH = os.path.join(os.path.dirname(__file__), db_path_env)
 
 # If you prefer to read directly from JSON, skip DB querying. But for flexibility, we’ll read JSON for now.
 # In production, you might read the DB’s PnL table directly.
