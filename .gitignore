@@ -1,0 +1,5 @@
+node_modules/
+.venv/
+*.db
+API/pnl*.json
+
