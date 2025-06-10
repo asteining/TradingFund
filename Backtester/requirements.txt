@@ -1,6 +1,7 @@
 backtrader
 pandas
 SQLAlchemy
-python=dotenv
-ib_insync          # for future live‐trading integration
-openai             # for on‐the‐fly prompt tuning (optional)
+python-dotenv
+ib_insync
+openai
+
