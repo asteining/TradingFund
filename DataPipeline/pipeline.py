@@ -4,13 +4,11 @@ import time
 import os
 import pandas as pd
 from datetime import datetime, timedelta
-from sqlalchemy import text
 import argparse
 
 import yfinance as yf  # yfinance handles rate‐limiting/retries
 from db import engine   # SQLAlchemy engine from DataPipeline/db.py
 from dotenv import load_dotenv
-from crypto import fetch_crypto
 
 # Load environment variables (DB_PATH, etc.) from DataPipeline/.env
 
