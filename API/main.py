@@ -3,7 +3,7 @@
 import os
 import json
 from typing import List
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from dotenv import load_dotenv
@@ -28,14 +28,18 @@ app.add_middleware(
 )
 
 @app.get("/pnl", response_model=List[dict])
-def get_pnl():
-    """
-    Return the latest P&L series as a JSON list of {date: str, value: float}.
-    For MVP, we’ll assume the backtester writes to API/pnl.json each time you run it.
-    """
-    pnl_json_path = os.path.join(os.path.dirname(__file__), "pnl.json")
+def get_pnl(
+    symbol: str = Query(..., description="Ticker symbol used in the backtest"),
+    strategy: str = Query(..., description="Strategy name used in the backtest"),
+):
+    """Return the P&L series for a given symbol and strategy."""
+    filename = f"pnl_{symbol.lower()}_{strategy}.json"
+    pnl_json_path = os.path.join(os.path.dirname(__file__), filename)
     if not os.path.isfile(pnl_json_path):
-        raise HTTPException(status_code=404, detail="PnL data not found. Run the backtest first.")
+        raise HTTPException(
+            status_code=404,
+            detail="PnL data not found. Run the backtest first.",
+        )
     with open(pnl_json_path, "r") as f:
         data = json.load(f)
     return data

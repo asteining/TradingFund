@@ -37,7 +37,7 @@ TradingFund/
 │   ├── main.py              # Defines /pnl and health endpoints
 │   ├── requirements.txt     # API-specific Python deps
 │   └── .env                 # Environment variables (e.g., DB_PATH)
-│   └── pnl.json             # Backtest output (created at runtime)
+│   └── pnl_<symbol>_<strategy>.json  # Backtest output (created at runtime)
 │
 └── Dashboard/              # React/TypeScript frontend
     ├── public/             # Static assets
@@ -140,7 +140,7 @@ README.md                   # This file
 * Filters to a specified date range (e.g., `2022-01-01` to `2023-12-31`).
 * Runs the `MeanReversionStrategy` on a single symbol (default: AAPL).
 * Records daily portfolio value (`self.value_history`) in the strategy.
-* Outputs a JSON array of `{ "date": "YYYY-MM-DD", "value": float }` to a file (e.g., `API/pnl.json`).
+* Outputs a JSON array of `{ "date": "YYYY-MM-DD", "value": float }` to a file (e.g., `API/pnl_aapl_mean_reversion.json`).
 
 ### Strategy Details
 
@@ -159,20 +159,20 @@ README.md                   # This file
 2. Ensure your data is up to date (DataPipeline step). Then run:
 
    ```bash
-   cd Backtester
-   python backtest.py \
-     --symbol AAPL \
-     --start 2022-01-01 \
-     --end   2023-12-31 \
-     --cash  100000 \
-     --output ../API/pnl.json \
-     --strategy enhanced
+    cd Backtester
+    python backtest.py \
+      --symbol AAPL \
+      --start 2022-01-01 \
+      --end   2023-12-31 \
+      --cash  100000 \
+      --output ../API/pnl_aapl_enhanced.json \
+      --strategy enhanced
    ```
 3. You should see:
 
    * Starting Portfolio Value (e.g., 100,000.00)
    * Final Portfolio Value (e.g., 99,452.00)
-   * `P&L series written to ../API/pnl.json`
+    * `P&L series written to ../API/pnl_aapl_enhanced.json`
 
 ### Customization
 
@@ -189,12 +189,12 @@ README.md                   # This file
 
 ### Purpose
 
-* A minimal web service that reads the JSON output from the backtester (`pnl.json`) and returns it via HTTP.
+* A minimal web service that reads the JSON output from the backtester (e.g., `pnl_aapl_mean_reversion.json`) and returns it via HTTP.
 * Enables Cross-Origin Resource Sharing (CORS) for the React Dashboard on port 3000.
 
 ### Endpoints
 
-* **GET /pnl**: Returns the array of `{ date, value }` from `pnl.json`.
+* **GET /pnl**: Accepts `symbol` and `strategy` query params and returns the array of `{ date, value }` from `pnl_{symbol}_{strategy}.json`.
 * **GET /health**: Returns `{ "status": "ok" }` for a quick health check.
 
 ### How to Run
@@ -217,7 +217,7 @@ README.md                   # This file
    curl http://localhost:8000/health
    # { "status": "ok" }
 
-   curl http://localhost:8000/pnl
+   curl "http://localhost:8000/pnl?symbol=AAPL&strategy=mean_reversion"
    # [ { "date":"2022-01-03", "value":100250.00 }, ... ]
    ```
 
@@ -230,7 +230,7 @@ README.md                   # This file
 ### Purpose
 
 * A single-page React/TypeScript app that displays a line chart of daily portfolio value.
-* On mount, it calls `GET http://localhost:8000/pnl` to fetch the JSON data and passes it to a Recharts component.
+* On mount, it calls `GET http://localhost:8000/pnl?symbol=AAPL&strategy=mean_reversion` (using selected values) to fetch the JSON data and passes it to a Recharts component.
 
 ### Components
 
@@ -238,7 +238,7 @@ README.md                   # This file
 * **`src/components/PnlChart.tsx`**: Renders a Recharts `LineChart` for the P\&L array.
 * **`src/App.tsx`**: Main component that:
 
-  1. Uses `useEffect` to fetch `/pnl` on page load.
+1. Uses `useEffect` to fetch `/pnl?symbol=AAPL&strategy=mean_reversion` (or the currently selected options) on page load.
   2. Manages `loading`, `error`, and `pnlData` state.
   3. Renders `<PnlChart data={pnlData} />` if data is present.
 
@@ -261,7 +261,7 @@ README.md                   # This file
 4. The app will show:
 
    * A loading message while fetching.
-   * The performance chart once `/pnl` returns data.
+    * The performance chart once the `/pnl` endpoint returns data.
    * An error message if the API is unavailable or returns an error.
 ## 5. Live Trading: Interactive Brokers
 
@@ -293,17 +293,17 @@ The script prints trade actions to the console as it reacts to live prices.
 DataPipeline: pipeline.py
   ↓ (writes)        
 Backtester: backtest.py ↓ (writes)
-                          API: main.py (GET /pnl)
+                           API: main.py (GET /pnl?symbol=...&strategy=...)
                              ↓ (serves)
-                       Dashboard: App.tsx (fetch /pnl)
+                        Dashboard: App.tsx (fetch /pnl?symbol=...&strategy=...)
                              ↓ (displays)
                        PnlChart.tsx (line chart)
 ```
 
 1. **DataPipeline** downloads and stores historical data in `market_data.db`.
-2. **Backtester** reads `market_data.db`, runs a mean-reversion strategy on one symbol (e.g., AAPL), and writes daily portfolio values to `API/pnl.json`.
-3. **API** serves that JSON array at `/pnl`.
-4. **Dashboard** fetches `/pnl` and renders a performance chart in the browser.
+2. **Backtester** reads `market_data.db`, runs a mean-reversion strategy on one symbol (e.g., AAPL), and writes daily portfolio values to `API/pnl_<symbol>_<strategy>.json`.
+3. **API** serves that JSON array via `/pnl?symbol=<symbol>&strategy=<strategy>`.
+4. **Dashboard** fetches the same endpoint and renders a performance chart in the browser.
 
 ---
 
