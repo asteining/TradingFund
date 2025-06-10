@@ -98,8 +98,9 @@ README.md                   # This file
 
 ### Purpose
 
-* Downloads OHLCV data for specified symbols via the `yfinance` library.
-* Filters by a date range (e.g., `2022-01-01` through today).
+* Downloads equity OHLCV via the `yfinance` library.
+* Downloads crypto OHLCV via `ccxt` (Binance).
+* Filters by a start/end date range.
 * Strips timezone info and writes the filtered DataFrame to SQLite tables in `market_data.db`.
 
 ### How to Run
@@ -110,11 +111,11 @@ README.md                   # This file
    source .venv/bin/activate
    ```
 2. (Optional) Inspect or edit `DataPipeline/.env` to set `DB_PATH` (default: `market_data.db`).
-3. Run the pipeline script:
+3. Run the pipeline script (optionally pass `--start` and `--end` in `YYYY-MM-DD` format):
 
    ```bash
    cd DataPipeline
-   python pipeline.py
+   python pipeline.py --start 2020-01-01 --end 2023-01-01
    ```
 4. Confirm the database:
 

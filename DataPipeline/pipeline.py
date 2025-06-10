@@ -3,15 +3,26 @@
 import time
 import os
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy import text
+import argparse
 
 import yfinance as yf  # yfinance handles rate‐limiting/retries
 from db import engine   # SQLAlchemy engine from DataPipeline/db.py
 from dotenv import load_dotenv
+from crypto import fetch_crypto
 
 # Load environment variables (DB_PATH, etc.) from DataPipeline/.env
+
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
+
+
+def parse_arguments() -> argparse.Namespace:
+    """Parse command-line arguments for start and end dates."""
+    parser = argparse.ArgumentParser(description="Ingest market data")
+    parser.add_argument("--start", type=str, help="start date YYYY-MM-DD")
+    parser.add_argument("--end", type=str, help="end date YYYY-MM-DD")
+    return parser.parse_args()
 
 
 def fetch_price_yahoo(symbol: str, period: str = "max") -> pd.DataFrame:
@@ -54,14 +65,21 @@ def save_to_db(symbol: str, df: pd.DataFrame, start_date: datetime, end_date: da
 
 
 if __name__ == "__main__":
-    # Define the date range you care about (naive datetimes)
-    start_date = datetime(2022, 1, 1)
-    end_date = datetime(2025, 5, 31)
+    args = parse_arguments()
+    today = datetime.today()
+    start_date = (
+        datetime.strptime(args.start, "%Y-%m-%d")
+        if args.start else today - timedelta(days=3650)
+    )
+    end_date = (
+        datetime.strptime(args.end, "%Y-%m-%d") if args.end else today
+    )
 
     print(f"Fetching data from {start_date.date()} through {end_date.date()}")
 
     # List of symbols you want to ingest
     symbols = ["AAPL", "MSFT", "GOOGL"]
+    crypto_symbols = ["BTC/USDT"]
 
     for sym in symbols:
         print(f"Downloading {sym} …")
@@ -82,5 +100,16 @@ if __name__ == "__main__":
                 print(f"❌ Second attempt failed for {sym}: {e2}")
                 # Skip to next symbol without crashing
                 continue
+
+    for csym in crypto_symbols:
+        print(f"Downloading crypto {csym} …")
+        try:
+            df = fetch_crypto(csym)
+            table = f"CRYPTO_{csym.replace('/', '')}"
+            save_to_db(table, df, start_date, end_date)
+            time.sleep(2)
+        except Exception as e:
+            print(f"❗ Error fetching {csym}: {e}")
+            continue
 
     print("Data ingestion complete.")
