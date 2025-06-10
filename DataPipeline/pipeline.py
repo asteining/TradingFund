@@ -79,7 +79,7 @@ if __name__ == "__main__":
 
     # List of symbols you want to ingest
     symbols = ["AAPL", "MSFT", "GOOGL"]
-    crypto_symbols = ["BTC/USDT"]
+    crypto_symbols = ["BTC-USD", "ETH-USD", "SOL-USD", "DOGE-USD"]
 
     for sym in symbols:
         print(f"Downloading {sym} …")
@@ -104,8 +104,8 @@ if __name__ == "__main__":
     for csym in crypto_symbols:
         print(f"Downloading crypto {csym} …")
         try:
-            df = fetch_crypto(csym)
-            table = f"CRYPTO_{csym.replace('/', '')}"
+            df = fetch_price_yahoo(csym, period="max")
+            table = f"CRYPTO_{csym.replace('-', '')}"
             save_to_db(table, df, start_date, end_date)
             time.sleep(2)
         except Exception as e:
