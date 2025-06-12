@@ -5,6 +5,7 @@ import json
 from typing import List
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+import pandas as pd
 
 from dotenv import load_dotenv
 
@@ -48,3 +49,13 @@ def get_pnl(
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+
+@app.get("/sweep_summary", response_model=List[dict])
+def sweep_summary():
+    """Return parameter sweep results from sweep_summary.csv."""
+    csv_path = os.path.join(os.path.dirname(__file__), "sweep_summary.csv")
+    if not os.path.isfile(csv_path):
+        raise HTTPException(status_code=404, detail="sweep_summary.csv not found")
+    df = pd.read_csv(csv_path)
+    return df.to_dict(orient="records")
