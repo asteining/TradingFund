@@ -46,6 +46,17 @@ def get_pnl(
         data = json.load(f)
     return data
 
+
+@app.get("/seasonal_stats", response_model=dict)
+def get_seasonal_stats():
+    """Return seasonal statistics from seasonal_stats.json."""
+    stats_path = os.path.join(os.path.dirname(__file__), "seasonal_stats.json")
+    if not os.path.isfile(stats_path):
+        raise HTTPException(status_code=404, detail="seasonal_stats.json not found")
+    with open(stats_path, "r") as f:
+        stats = json.load(f)
+    return stats
+
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
