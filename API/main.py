@@ -28,6 +28,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/spread_metrics")
+def get_spread_metrics():
+    """Return spread backtest metrics stored in metrics_spread.json."""
+    metrics_path = os.path.join(os.path.dirname(__file__), "metrics_spread.json")
+    if not os.path.isfile(metrics_path):
+        raise HTTPException(status_code=404, detail="Spread metrics file not found")
+    with open(metrics_path, "r") as f:
+        data = json.load(f)
+    return data
+
 @app.get("/pnl", response_model=List[dict])
 def get_pnl(
     symbol: str = Query(..., description="Ticker symbol used in the backtest"),
