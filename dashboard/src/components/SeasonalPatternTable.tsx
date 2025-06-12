@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Table from "react-bootstrap/Table";
+// Use a standard HTML table; no react-bootstrap dependency
 import { api } from "../api/client";
 
 export interface WeekStat {
@@ -36,7 +36,7 @@ const SeasonalPatternTable: React.FC = () => {
   }
 
   return (
-    <Table striped bordered hover>
+    <table style={{ width: "100%", borderCollapse: "collapse" }}>
       <thead>
         <tr>
           <th>Weekday</th>
@@ -53,7 +53,7 @@ const SeasonalPatternTable: React.FC = () => {
           </tr>
         ))}
       </tbody>
-    </Table>
+    </table>
   );
 };
 

@@ -3,9 +3,9 @@
 import React, { useEffect, useState } from "react";
 import { api } from "./api/client";
 import PnlChart from "./components/PnlChart";
-import { SweepSummaryTable } from "./components/SweepSummaryTable";
-import { SeasonalPatternTable } from "./components/SeasonalPatternTable";
-import { SpreadMetricsCard } from "./components/SpreadMetricsCard";
+import SweepSummaryTable from "./components/SweepSummaryTable";
+import SeasonalPatternTable from "./components/SeasonalPatternTable";
+import SpreadMetricsCard from "./components/SpreadMetricsCard";
 
 interface PnlPoint {
   date: string;

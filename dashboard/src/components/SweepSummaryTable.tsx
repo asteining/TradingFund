@@ -1,7 +1,7 @@
 // Dashboard/src/components/SweepSummaryTable.tsx
 
 import React, { useEffect, useState } from "react";
-import Table from "react-bootstrap/Table";
+// Using a regular HTML table instead of react-bootstrap to avoid external dependencies
 import { api } from "../api/client";
 
 export interface SweepRow {
@@ -30,7 +30,7 @@ const SweepSummaryTable: React.FC = () => {
   }, []);
 
   return (
-    <Table striped bordered hover size="sm">
+    <table style={{ width: "100%", borderCollapse: "collapse" }}>
       <thead>
         <tr>
           <th>Period</th>
@@ -53,7 +53,7 @@ const SweepSummaryTable: React.FC = () => {
           </tr>
         ))}
       </tbody>
-    </Table>
+    </table>
   );
 };
 
