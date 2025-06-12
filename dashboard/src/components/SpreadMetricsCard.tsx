@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Card from "react-bootstrap/Card";
+// Replace react-bootstrap Card with a simple styled div
 import { api } from "../api/client";
 
 export interface SpreadMetrics {
@@ -37,20 +37,25 @@ const SpreadMetricsCard: React.FC = () => {
   }
 
   return (
-    <Card style={{ maxWidth: 400 }}>
-      <Card.Body>
-        <Card.Title>
-          Spread Metrics {metrics.symbol1}/{metrics.symbol2}
-        </Card.Title>
-        <Card.Text>
-          <strong>Total Return:</strong> {formatPercent(metrics.total_return)}
-          <br />
-          <strong>Sharpe Ratio:</strong> {metrics.sharpe.toFixed(2)}
-          <br />
-          <strong>Max Drawdown:</strong> {formatPercent(metrics.max_drawdown)}
-        </Card.Text>
-      </Card.Body>
-    </Card>
+    <div
+      style={{
+        maxWidth: 400,
+        border: "1px solid #ddd",
+        borderRadius: 4,
+        padding: 16,
+      }}
+    >
+      <h3>
+        Spread Metrics {metrics.symbol1}/{metrics.symbol2}
+      </h3>
+      <p>
+        <strong>Total Return:</strong> {formatPercent(metrics.total_return)}
+        <br />
+        <strong>Sharpe Ratio:</strong> {metrics.sharpe.toFixed(2)}
+        <br />
+        <strong>Max Drawdown:</strong> {formatPercent(metrics.max_drawdown)}
+      </p>
+    </div>
   );
 };
 
