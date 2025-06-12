@@ -3,6 +3,9 @@
 import React, { useEffect, useState } from "react";
 import { api } from "./api/client";
 import PnlChart from "./components/PnlChart";
+import { SweepSummaryTable } from "./components/SweepSummaryTable";
+import { SeasonalPatternTable } from "./components/SeasonalPatternTable";
+import { SpreadMetricsCard } from "./components/SpreadMetricsCard";
 
 interface PnlPoint {
   date: string;
@@ -67,6 +70,18 @@ function App() {
       {!loading && !error && pnlData.length === 0 && (
         <p>No P&amp;L data available.</p>
       )}
+      <section>
+        <h2>Parameter Sweep Summary</h2>
+        <SweepSummaryTable />
+      </section>
+      <section>
+        <h2>Seasonal Patterns</h2>
+        <SeasonalPatternTable />
+      </section>
+      <section>
+        <h2>BTC–ETH Spread Metrics</h2>
+        <SpreadMetricsCard />
+      </section>
     </div>
   );
 }
