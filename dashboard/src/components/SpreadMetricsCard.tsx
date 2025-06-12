@@ -3,14 +3,18 @@ import React, { useEffect, useState } from "react";
 import { api } from "../api/client";
 
 export interface SpreadMetrics {
-  symbol1: string;
-  symbol2: string;
-  total_return: number;
-  sharpe: number;
-  max_drawdown: number;
+  // optional fields depending on what the backend provides
+  symbol1?: string;
+  symbol2?: string;
+  total_return?: number;
+  sharpe?: number;
+  sharpe_ratio?: number;
+  max_drawdown?: number;
 }
 
 const formatPercent = (value: number) => `${(value * 100).toFixed(2)}%`;
+const formatPercentOptional = (value?: number) =>
+  value !== undefined ? formatPercent(value) : "N/A";
 
 const SpreadMetricsCard: React.FC = () => {
   const [metrics, setMetrics] = useState<SpreadMetrics | null>(null);
@@ -36,6 +40,8 @@ const SpreadMetricsCard: React.FC = () => {
     return <p>Loading metrics...</p>;
   }
 
+  const sharpeValue = metrics.sharpe ?? metrics.sharpe_ratio;
+
   return (
     <div
       style={{
@@ -46,14 +52,18 @@ const SpreadMetricsCard: React.FC = () => {
       }}
     >
       <h3>
-        Spread Metrics {metrics.symbol1}/{metrics.symbol2}
+        Spread Metrics
+        {metrics.symbol1 && metrics.symbol2
+          ? ` ${metrics.symbol1}/${metrics.symbol2}`
+          : ""}
       </h3>
       <p>
-        <strong>Total Return:</strong> {formatPercent(metrics.total_return)}
+        <strong>Total Return:</strong> {formatPercentOptional(metrics.total_return)}
         <br />
-        <strong>Sharpe Ratio:</strong> {metrics.sharpe.toFixed(2)}
+        <strong>Sharpe Ratio:</strong>{" "}
+        {sharpeValue !== undefined ? sharpeValue.toFixed(2) : "N/A"}
         <br />
-        <strong>Max Drawdown:</strong> {formatPercent(metrics.max_drawdown)}
+        <strong>Max Drawdown:</strong> {formatPercentOptional(metrics.max_drawdown)}
       </p>
     </div>
   );
