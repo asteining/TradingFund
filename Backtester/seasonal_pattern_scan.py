@@ -52,6 +52,19 @@ def main() -> None:
 
     print(result.to_string(float_format=lambda x: f"{x: .6f}"))
 
+    results_list = [
+        {
+            "weekday": idx,
+            "avg_return": row["average_return"],
+            "t_stat": row["t_stat"],
+        }
+        for idx, row in result.iterrows()
+    ]
+
+    with open("../API/seasonal_stats.json", "w") as f:
+        json.dump(results_list, f, indent=2)
+    print("Wrote ../API/seasonal_stats.json")
+
 
 if __name__ == "__main__":
     main()
