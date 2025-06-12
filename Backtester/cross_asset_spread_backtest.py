@@ -69,6 +69,27 @@ def main():
         json.dump(pnl_data, f, indent=2)
     print(f"P&L series written to {output_path}")
 
+    # ---- Performance metrics ----
+    returns = pd.Series(value_history).pct_change().dropna()
+    if not returns.empty:
+        sharpe = (returns.mean() / returns.std()) * np.sqrt(252)
+        running_max = pd.Series(value_history).cummax()
+        drawdown = (pd.Series(value_history) - running_max) / running_max
+        max_drawdown = drawdown.min()
+    else:
+        sharpe = 0.0
+        max_drawdown = 0.0
+
+    metrics = {
+        "sharpe_ratio": float(sharpe),
+        "max_drawdown": float(max_drawdown),
+    }
+
+    metrics_path = os.path.join(os.path.dirname(__file__), "..", "API", "metrics_spread.json")
+    with open(metrics_path, "w") as f:
+        json.dump(metrics, f, indent=2)
+    print("Wrote ../API/metrics_spread.json")
+
 
 if __name__ == "__main__":
     main()
