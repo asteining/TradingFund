@@ -1,0 +1,37 @@
+[
+  {
+    "weekday": "Friday",
+    "avg_return": 0.004883338456323299,
+    "t_stat": 1.8552390627077804
+  },
+  {
+    "weekday": "Wednesday",
+    "avg_return": 0.08019593434768131,
+    "t_stat": 1.0611486017984604
+  },
+  {
+    "weekday": "Monday",
+    "avg_return": 0.002548380906143525,
+    "t_stat": 1.0484349585601092
+  },
+  {
+    "weekday": "Thursday",
+    "avg_return": 0.0014684093972244803,
+    "t_stat": 0.713969877625742
+  },
+  {
+    "weekday": "Sunday",
+    "avg_return": 0.0016198249837901945,
+    "t_stat": 0.6862820974981036
+  },
+  {
+    "weekday": "Saturday",
+    "avg_return": 0.00129175408672014,
+    "t_stat": 0.39972682009756066
+  },
+  {
+    "weekday": "Tuesday",
+    "avg_return": -0.0028954254991606586,
+    "t_stat": -1.0265829730397233
+  }
+]
