@@ -78,8 +78,8 @@ def sweep_summary():
         raise HTTPException(status_code=404, detail="sweep_summary.csv not found")
     df = pd.read_csv(csv_path)
 
-    # Replace NaN with None so JSON is valid
-    df = df.where(pd.notnull(df), None)
+    # Convert to object dtype first so None values are preserved
+    df = df.astype(object).where(pd.notnull(df), None)
 
     return JSONResponse(content=df.to_dict(orient="records"))
 
