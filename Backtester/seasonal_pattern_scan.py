@@ -1,70 +1,21 @@
-import os
-import json
-import numpy as np
-import pandas as pd
-from sqlalchemy import MetaData, Table, select
-
-# Reuse the SQLAlchemy engine from db.py in this folder
+# Backtester/seasonal_pattern_scan.py
+import json, pathlib, pandas as pd, os
+from sqlalchemy import text
 from db import engine
 
+root   = pathlib.Path(__file__).parents[1]
+cfg    = json.load(open(root / "config.json"))
+symbol = cfg["symbol"]
 
-def load_data() -> pd.DataFrame:
-    """Load BTC data from JSON or SQLite.
+df = pd.read_sql(text(f'SELECT "Date","Close" FROM "{symbol}"'),
+                 con=engine, parse_dates=["Date"]).set_index("Date")
+daily = df["Close"].pct_change()
 
-    Returns
-    -------
-    pd.DataFrame with index Date and column 'Close'.
-    """
-    json_path = os.path.join(os.path.dirname(__file__), "..", "API", "pnl_btc_mean_reversion.json")
-    if os.path.isfile(json_path):
-        with open(json_path, "r") as f:
-            data = json.load(f)
-        df = pd.DataFrame(data)
-        df["date"] = pd.to_datetime(df["date"])
-        df.rename(columns={"value": "Close"}, inplace=True)
-        df.set_index("date", inplace=True)
-        df = df[["Close"]]
-    else:
-        metadata = MetaData()
-        table = Table("CRYPTO_BTCUSD", metadata, autoload_with=engine)
-        stmt = select(table.c.Date, table.c.Close)
-        df = pd.read_sql(stmt, con=engine, parse_dates=["Date"])
-        df.set_index("Date", inplace=True)
-    return df
+stats = (daily.groupby(daily.index.weekday)
+              .agg(avg_return="mean",
+                   t_stat=lambda x: x.mean()/x.std()*len(x)**0.5)
+              .reset_index(names="weekday"))
 
-
-def main() -> None:
-    df = load_data()
-    df["returns"] = df["Close"].pct_change()
-    df = df.dropna()
-    df["weekday"] = df.index.day_name()
-
-    grouped = df.groupby("weekday")["returns"]
-    average_return = grouped.mean()
-    sem = grouped.apply(lambda x: x.std(ddof=1) / np.sqrt(len(x)))
-    t_stat = average_return / sem
-
-    result = pd.DataFrame({
-        "average_return": average_return,
-        "standard_error": sem,
-        "t_stat": t_stat,
-    }).sort_values("t_stat", ascending=False)
-
-    print(result.to_string(float_format=lambda x: f"{x: .6f}"))
-
-    results_list = [
-        {
-            "weekday": idx,
-            "avg_return": row["average_return"],
-            "t_stat": row["t_stat"],
-        }
-        for idx, row in result.iterrows()
-    ]
-
-    with open("../API/seasonal_stats.json", "w") as f:
-        json.dump(results_list, f, indent=2)
-    print("Wrote ../API/seasonal_stats.json")
-
-
-if __name__ == "__main__":
-    main()
+out = root / "API" / f"seasonal_stats_{symbol.lower()}.json"
+stats.to_json(out, orient="records", indent=2)
+print("\u2713 seasonal stats written for", symbol)
