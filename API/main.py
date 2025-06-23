@@ -10,6 +10,9 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+from .utils import current_cfg
+
+cfg = current_cfg()
 
 # ------------------------------------------------------------------
 # 0. Environment / path setup
@@ -60,27 +63,21 @@ def get_pnl(
 
 
 @app.get("/seasonal_stats")
-def get_seasonal_stats():
-    """Return seasonal statistics as a LIST of dicts."""
-    path = os.path.join(os.path.dirname(__file__), "seasonal_stats.json")
+def seasonal_stats(symbol: str = cfg["symbol"]):
+    path = os.path.join(os.path.dirname(__file__),
+                        f"seasonal_stats_{symbol.lower()}.json")
     if not os.path.isfile(path):
-        raise HTTPException(404, "seasonal_stats.json not found")
-    data = json.load(open(path))
-    # data is a LIST → wrap in JSONResponse so FastAPI skips Pydantic validation
-    return JSONResponse(content=data)
+        raise HTTPException(404, f"{path} not found")
+    return JSONResponse(content=json.load(open(path)))
 
 
-@app.get("/sweep_summary", response_model=List[dict])
-def sweep_summary():
-    """Return parameter sweep results from sweep_summary.csv."""
-    csv_path = os.path.join(os.path.dirname(__file__), "sweep_summary.csv")
-    if not os.path.isfile(csv_path):
-        raise HTTPException(status_code=404, detail="sweep_summary.csv not found")
-    df = pd.read_csv(csv_path)
-
-    # Convert to object dtype first so None values are preserved
-    df = df.astype(object).where(pd.notnull(df), None)
-
+@app.get("/sweep_summary")
+def sweep_summary(symbol: str = cfg["symbol"]):
+    path = os.path.join(os.path.dirname(__file__),
+                        f"sweep_summary_{symbol.lower()}.csv")
+    if not os.path.isfile(path):
+        raise HTTPException(404, f"{path} not found")
+    df = pd.read_csv(path).where(pd.notnull(pd.read_csv(path)), None)
     return JSONResponse(content=df.to_dict(orient="records"))
 
 @app.get("/health")
