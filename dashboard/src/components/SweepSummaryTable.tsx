@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 // Using a regular HTML table instead of react-bootstrap to avoid external dependencies
-import { api } from "../api/client";
+import axios from "axios/dist/node/axios.cjs";
 
 export interface SweepRow {
   period: number;
@@ -13,13 +13,17 @@ export interface SweepRow {
   max_drawdown: number;
 }
 
-const SweepSummaryTable: React.FC = () => {
+interface Props {
+  symbol: string;
+}
+
+const SweepSummaryTable: React.FC<Props> = (props) => {
   const [rows, setRows] = useState<SweepRow[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await api.get<SweepRow[]>("/sweep_summary");
+        const response = await axios.get<SweepRow[]>(`/sweep_summary?symbol=${props.symbol}`);
         setRows(response.data);
       } catch (err) {
         console.error("Failed to fetch sweep summary", err);
