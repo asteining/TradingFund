@@ -33,7 +33,9 @@ def fetch_data_from_db(symbol: str) -> pd.DataFrame:
     return df
 
 
-def run_backtest(symbol: str, start: str, end: str, initial_cash: float, output_json: str, strategy: str):
+def run_backtest(symbol: str, start: str, end: str, initial_cash: float,
+                 output_json: str, strategy: str,
+                 period: int, devfactor: float, stake: int):
     """
     1) Pull price data from SQLite via fetch_data_from_db()
     2) Run Backtrader simulation using the requested strategy
@@ -59,7 +61,12 @@ def run_backtest(symbol: str, start: str, end: str, initial_cash: float, output_
     }
 
     strat_cls = strategy_map.get(strategy, MeanReversionStrategy)
-    cerebro.addstrategy(strat_cls)
+    cerebro.addstrategy(
+        strat_cls,
+        period=period,
+        devfactor=devfactor,
+        stake=stake,
+    )
 
     print(f"Starting Portfolio Value: {cerebro.broker.getvalue():,.2f}")
     results = cerebro.run()
@@ -122,6 +129,24 @@ if __name__ == "__main__":
         choices=["mean_reversion", "enhanced"],
         help="Which strategy to run",
     )
+    parser.add_argument(
+        "--period",
+        type=int,
+        default=20,
+        help="look-back window for z-score",
+    )
+    parser.add_argument(
+        "--devfactor",
+        type=float,
+        default=2.0,
+        help="standard-dev threshold",
+    )
+    parser.add_argument(
+        "--stake",
+        type=int,
+        default=100,
+        help="position size (shares/contracts)",
+    )
     args = parser.parse_args()
 
     run_backtest(
@@ -131,4 +156,7 @@ if __name__ == "__main__":
         initial_cash=args.cash,
         output_json=args.output,
         strategy=args.strategy,
+        period=args.period,
+        devfactor=args.devfactor,
+        stake=args.stake,
     )
