@@ -40,13 +40,7 @@ app.add_middleware(
 # 2. Endpoints
 # ------------------------------------------------------------------
 
-@app.get("/spread_metrics")
-def get_spread_metrics():
-    """Return spread-backtest metrics stored in metrics_spread.json."""
-    path = os.path.join(os.path.dirname(__file__), "metrics_spread.json")
-    if not os.path.isfile(path):
-        raise HTTPException(404, "metrics_spread.json not found")
-    return json.load(open(path))
+
 
 
 @app.get("/pnl", response_model=List[dict])
@@ -62,23 +56,7 @@ def get_pnl(
     return json.load(open(path))
 
 
-@app.get("/seasonal_stats")
-def seasonal_stats(symbol: str = cfg["symbol"]):
-    path = os.path.join(os.path.dirname(__file__),
-                        f"seasonal_stats_{symbol.lower()}.json")
-    if not os.path.isfile(path):
-        raise HTTPException(404, f"{path} not found")
-    return JSONResponse(content=json.load(open(path)))
 
-
-@app.get("/sweep_summary")
-def sweep_summary(symbol: str = cfg["symbol"]):
-    path = os.path.join(os.path.dirname(__file__),
-                        f"sweep_summary_{symbol.lower()}.csv")
-    if not os.path.isfile(path):
-        raise HTTPException(404, f"{path} not found")
-    df = pd.read_csv(path).where(pd.notnull(pd.read_csv(path)), None)
-    return JSONResponse(content=df.to_dict(orient="records"))
 
 @app.get("/health")
 def health_check():
