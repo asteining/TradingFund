@@ -1,0 +1,7 @@
+{
+  "symbol":   "AAPL",
+  "strategy": "mean_reversion",
+  "start":    "2015-06-09",
+  "end":      "2025-06-09",
+  "cash":     100000
+}
