@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 // Using a regular HTML table instead of react-bootstrap to avoid external dependencies
-import axios from "axios/dist/node/axios.cjs";
+import axios from "axios";
 
 export interface SweepRow {
   period: number;
