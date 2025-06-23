@@ -1,32 +1,42 @@
-import os
-import subprocess
+# Backtester/parameter_sweep.py
+"""
+Grid-search wrapper that reads its settings from ../../config.json
+and writes PnL files to API/pnl_sweep/<symbol>/.
+"""
+
+import json, pathlib, subprocess, os
 from itertools import product
 
-periods = [10, 20, 30]
+root     = pathlib.Path(__file__).parents[1]          # project root
+cfg      = json.load(open(root / "config.json"))
+symbol   = cfg["symbol"]
+start    = cfg["start"]
+end      = cfg["end"]
+cash     = str(cfg["cash"])
+strategy = cfg["strategy"]
+
+# ----- sweep grid ----------------------------------------------------------
+periods    = [10, 20, 30]
 devfactors = [1.5, 2.0, 2.5]
-stakes = [50, 100, 200]
+stakes     = [50, 100, 200]
 
-# Output directory relative to this script
-output_dir = os.path.join('..', 'API', 'pnl_sweep')
-os.makedirs(output_dir, exist_ok=True)
+outdir = root / "API" / "pnl_sweep" / symbol
+outdir.mkdir(parents=True, exist_ok=True)
 
-for period, devfactor, stake in product(periods, devfactors, stakes):
-    output_path = os.path.join(output_dir, f'pnl_{period}_{devfactor}_{stake}.json')
+for p, d, s in product(periods, devfactors, stakes):
+    outfile = outdir / f"pnl_{p}_{d}_{s}.json"
     cmd = [
-        'python', 'backtest.py',
-        '--symbol', 'CRYPTO_BTCUSD',
-        '--start', '2015-06-09',
-        '--end', '2025-06-09',
-        '--cash', '100000',
-        '--period', str(period),
-        '--devfactor', str(devfactor),
-        '--stake', str(stake),
-        '--strategy', 'mean_reversion',
-        '--output', output_path,
+        "python", str(root / "Backtester" / "backtest.py"),
+        "--symbol", symbol,
+        "--start",  start,
+        "--end",    end,
+        "--cash",   cash,
+        "--period", str(p),
+        "--devfactor", str(d),
+        "--stake",  str(s),
+        "--strategy", strategy,
+        "--output", str(outfile),
     ]
-    print(f'Running: {" ".join(cmd)}')
-    try:
-        subprocess.run(cmd, check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Command failed with error: {e}")
+    print("▶", " ".join(cmd))
+    subprocess.run(cmd, check=True)
 
