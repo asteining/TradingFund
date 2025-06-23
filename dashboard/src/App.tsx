@@ -71,11 +71,11 @@ function App() {
       )}
       <section>
         <h2>Parameter Sweep Summary</h2>
-        <SweepSummaryTable />
+        <SweepSummaryTable symbol={symbol} />
       </section>
       <section>
         <h2>Seasonal Patterns</h2>
-        <SeasonalPatternTable />
+        <SeasonalPatternTable symbol={symbol} />
       </section>
       
     </div>

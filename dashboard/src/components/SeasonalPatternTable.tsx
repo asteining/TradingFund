@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 // Use a standard HTML table; no react-bootstrap dependency
-import { api } from "../api/client";
+import axios from "axios/dist/node/axios.cjs";
 
 export interface WeekStat {
   weekday: string;
@@ -8,7 +8,11 @@ export interface WeekStat {
   t_stat: number;
 }
 
-const SeasonalPatternTable: React.FC = () => {
+interface Props {
+  symbol: string;
+}
+
+const SeasonalPatternTable: React.FC<Props> = (props) => {
   const [stats, setStats] = useState<WeekStat[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -16,7 +20,7 @@ const SeasonalPatternTable: React.FC = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await api.get<WeekStat[]>("/seasonal_stats");
+        const response = await axios.get<WeekStat[]>(`/seasonal_stats?symbol=${props.symbol}`);
         setStats(response.data);
         setError(null);
       } catch (err: any) {

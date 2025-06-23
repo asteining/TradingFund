@@ -1,6 +1,6 @@
 // Dashboard/src/api/client.ts
 
-import axios from "axios";
+import axios from "axios/dist/node/axios.cjs";
 
 export const api = axios.create({
   baseURL: "http://localhost:8000", // point to our FastAPI service
