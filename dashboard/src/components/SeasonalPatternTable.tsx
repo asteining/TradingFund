@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 // Use a standard HTML table; no react-bootstrap dependency
-import axios from "axios/dist/node/axios.cjs";
+import axios from "axios";
 
 export interface WeekStat {
   weekday: string;
