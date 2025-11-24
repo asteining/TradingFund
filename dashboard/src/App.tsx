@@ -37,7 +37,7 @@ function App() {
 
   return (
     <div style={{ maxWidth: 800, margin: "0 auto", padding: 20 }}>
-      <h1>Trading Fund – P&amp;L Chart</h1>
+      <h1>Trading Fund – AAPL Mean Reversion</h1>
       <div style={{ marginBottom: 20 }}>
         <label>
           Symbol:&nbsp;
@@ -59,7 +59,8 @@ function App() {
         </label>
       </div>
       <p>
-        Showing {symbol} using <em>{strategy}</em> strategy
+        Default view shows Apple (AAPL) running the <em>mean_reversion</em> backtest pulled from
+        the FastAPI backend. Use the selectors above to try other symbols or the enhanced strategy.
       </p>
       {loading && <p>Loading P&amp;L…</p>}
       {error && <p style={{ color: "red" }}>Error: {error}</p>}
