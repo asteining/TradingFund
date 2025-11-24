@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: tradingfund-api
+    env: python
+    plan: free
+    buildCommand: |
+      pip install -r DataPipeline/requirements.txt
+      pip install -r Backtester/requirements.txt
+      pip install -r API/requirements.txt
+      python scripts/bootstrap_aapl_mean_reversion.py
+    startCommand: uvicorn API.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DB_PATH
+        value: market_data.db
+  - type: static
+    name: tradingfund-dashboard
+    env: static
+    buildCommand: |
+      cd dashboard
+      yarn install --frozen-lockfile
+      REACT_APP_API_BASE=https://tradingfund-api.onrender.com yarn build
+    staticPublishPath: dashboard/build

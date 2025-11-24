@@ -2,12 +2,18 @@
 
 import time
 import os
+from pathlib import Path
+import sys
 import pandas as pd
 from datetime import datetime, timedelta
 import argparse
 
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 import yfinance as yf  # yfinance handles rate‐limiting/retries
-from db import engine   # SQLAlchemy engine from DataPipeline/db.py
+from DataPipeline.db import engine   # SQLAlchemy engine from DataPipeline/db.py
 from dotenv import load_dotenv
 
 # Load environment variables (DB_PATH, etc.) from DataPipeline/.env

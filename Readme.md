@@ -221,6 +221,17 @@ README.md                   # This file
    # [ { "date":"2022-01-03", "value":100250.00 }, ... ]
    ```
 
+### Bootstrap the default AAPL dataset
+
+Run the helper script once to guarantee the AAPL mean-reversion P&L JSON exists:
+
+```bash
+python scripts/bootstrap_aapl_mean_reversion.py
+```
+
+It will download AAPL prices into `DataPipeline/market_data.db` and write
+`API/pnl_aapl_mean_reversion.json` for the API to serve.
+
 ---
 
 ## 4. Dashboard: React Frontend
@@ -263,6 +274,31 @@ README.md                   # This file
    * A loading message while fetching.
     * The performance chart once the `/pnl` endpoint returns data.
    * An error message if the API is unavailable or returns an error.
+
+---
+
+## Deploying to Render
+
+The repository includes a `render.yaml` blueprint that provisions both the FastAPI backend and the React dashboard.
+
+1. **Bootstrap data during build**: the web service build command runs `python scripts/bootstrap_aapl_mean_reversion.py` so `pnl_aapl_mean_reversion.json` is always present.
+2. **Create the Blueprint**: connect this repo in Render and choose **Blueprint** deployment. Render will create:
+   * `tradingfund-api` (Python web service) with `uvicorn API.main:app` on the Render-provided `$PORT`.
+   * `tradingfund-dashboard` (Static site) built from `dashboard/`.
+3. **Point the dashboard at the API**: update the `REACT_APP_API_BASE` environment variable on the static site to the API's live URL (e.g., `https://tradingfund-api.onrender.com`) and trigger a redeploy.
+
+If you prefer manual steps instead of the blueprint:
+
+```bash
+# 1) Backend web service
+pip install -r DataPipeline/requirements.txt -r Backtester/requirements.txt -r API/requirements.txt
+python scripts/bootstrap_aapl_mean_reversion.py
+uvicorn API.main:app --host 0.0.0.0 --port $PORT
+
+# 2) Frontend static site
+cd dashboard
+REACT_APP_API_BASE=https://<your-api-url> yarn build
+```
 ## 5. Live Trading: Interactive Brokers
 
 **Location:** `LiveTrader/trader.py`

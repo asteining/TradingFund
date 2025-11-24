@@ -20,9 +20,10 @@ cfg = current_cfg()
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
 
 db_path_env = os.getenv("DB_PATH")
-if not db_path_env:
-    raise RuntimeError("DB_PATH must be set in API/.env")
-DB_PATH = os.path.join(os.path.dirname(__file__), db_path_env)
+if db_path_env:
+    DB_PATH = os.path.join(os.path.dirname(__file__), db_path_env)
+else:
+    DB_PATH = os.path.join(os.path.dirname(__file__), "../DataPipeline/market_data.db")
 
 # ------------------------------------------------------------------
 # 1. FastAPI app + CORS

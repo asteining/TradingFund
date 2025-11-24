@@ -4,13 +4,19 @@ import os
 import argparse
 import pandas as pd
 import json
+from pathlib import Path
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 import backtrader as bt
 
 from sqlalchemy import MetaData, Table, select
-from db import engine
-from strategies.mean_reversion import MeanReversionStrategy
-from strategies.mean_reversion_rsi import EnhancedMeanReversionStrategy
+from Backtester.db import engine
+from Backtester.strategies.mean_reversion import MeanReversionStrategy
+from Backtester.strategies.mean_reversion_rsi import EnhancedMeanReversionStrategy
 
 
 def fetch_data_from_db(symbol: str) -> pd.DataFrame:
