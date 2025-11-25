@@ -1,4 +1,3 @@
-# DataPipeline/db.py
 import os
 from pathlib import Path
 
@@ -10,22 +9,24 @@ from dotenv import load_dotenv
 # Load .env variables (e.g. DB_PATH)
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
 
-
 def resolve_db_path() -> Path:
-    """Return an absolute path to the SQLite DB, with sensible defaults."""
-
+    """Return an absolute path to the SQLite DB, with sensible defaults and safe directory handling."""
+    
     configured = os.getenv("DB_PATH")
-    base_dir = Path(__file__).parent
-
-    # If no env var is set, fall back to a local market_data.db in DataPipeline/
+    
+    # Default fallback — use project root if no DB_PATH is set
     if not configured:
-        return base_dir / "market_data.db"
+        fallback_path = Path("market_data.db")
+    else:
+        # Use absolute or relative path from env
+        candidate = Path(configured)
+        fallback_path = candidate if candidate.is_absolute() else Path(__file__).parent / candidate
 
-    # Support both relative (e.g. "market_data.db") and absolute paths
-    candidate = Path(configured)
-    return candidate if candidate.is_absolute() else base_dir / candidate
+    # Ensure parent directory exists (important for Render)
+    fallback_path.parent.mkdir(parents=True, exist_ok=True)
+    return fallback_path
 
-
+# Resolve and construct DB path
 DB_PATH = resolve_db_path()
 
 # Create the SQLite engine
